@@ -46,7 +46,7 @@ RUN su meow -c " cd /home/meow && \
 RUN su meow -c " cd /home/meow && \
   mkdir queue stage usr bin && \
   chmod a+rwx stage && \
-  cd /home/meow/weakpwh && ./cmp.sh && \
+  cd /home/meow/weakpwh && ls && ./cmp.sh && \
   cd /home/meow/gbl2ngc/src && ./cmp.sh && \
   cd /home/meow/bin && \
   ln -s /home/meow/gbl2ngc/src/gbl2ngc . && \
