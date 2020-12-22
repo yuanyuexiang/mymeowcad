@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM ubuntu:18.04
 
 # The npm module 'canvas' has a lot of issue and is subseptible
 # to bit-rot.  Periodically the 'npm install -g canvas' will fail
