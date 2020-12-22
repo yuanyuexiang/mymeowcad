@@ -46,8 +46,8 @@ RUN su meow -c " cd /home/meow && \
 RUN su meow -c " cd /home/meow && \
   mkdir queue stage usr bin && \
   chmod a+rwx stage && \
-  cd /home/meow/weakpwh && ls && ./cmp.sh && \
-  cd /home/meow/gbl2ngc/src && ./cmp.sh && \
+  cd /home/meow/weakpwh && g++ -g clipper.cpp sweep/advancing_front.cc sweep/cdt.cc sweep/sweep.cc sweep/sweep_context.cc common/shapes.cc weakpwh.cpp -o weakpwh && \
+  cd /home/meow/gbl2ngc/src && g++ -g clipper.cpp sweep/advancing_front.cc sweep/cdt.cc sweep/sweep.cc sweep/sweep_context.cc common/shapes.cc weakpwh.cpp -o weakpwh && \
   cd /home/meow/bin && \
   ln -s /home/meow/gbl2ngc/src/gbl2ngc . && \
   ln -s /home/meow/weakpwh/weakpwh . && \
