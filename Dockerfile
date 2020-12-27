@@ -154,6 +154,8 @@ RUN mv /var/www/template/analytics_template.html analytics_template.meowcad.html
 # keep the container running.
 #
 COPY ./startup_and_persist.sh /root/startup_and_persist.sh
+RUN chmod a+rx /root/startup_and_persist.sh
+
 COPY ./000-default.conf /etc/apache2/sites-available/000-default.conf
 # 80 should redirect to 443.
 #
