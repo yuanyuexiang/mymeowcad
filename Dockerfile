@@ -1,4 +1,7 @@
+#FROM ubuntu:20.04
 FROM debian:jessie
+#FROM debian:9.13
+ENV DEBIAN_FRONTEND=noninteractive
 
 # The npm module 'canvas' has a lot of issue and is subseptible
 # to bit-rot.  Periodically the 'npm install -g canvas' will fail
@@ -12,6 +15,15 @@ FROM debian:jessie
 # is the most important of those).
 # See: https://github.com/Automattic/node-canvas/wiki/Installation---Ubuntu-and-other-Debian-based-systems
 #
+
+
+RUN echo "deb http://mirrors.aliyun.com/debian jessie main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian jessie main contrib non-free" >> /etc/apt/sources.list  && \
+    echo "deb http://mirrors.aliyun.com/debian jessie-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian jessie-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-security jessie/updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian-security jessie/updates main contrib non-free" >> /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y git apache2 haproxy \
   nodejs npm build-essential gcc g++ python \
   redis-server redis-tools python-redis \
@@ -25,7 +37,7 @@ RUN apt-get update && apt-get install -y git apache2 haproxy \
 #
 RUN a2enmod rewrite && \
   a2enmod cgi && \
-  useradd -m meow && \
+  useradd -m -g root meow && \
   echo 'meow:mewmew' | chpasswd
 
 # Grab git repos
@@ -35,19 +47,19 @@ RUN a2enmod rewrite && \
 #  - weakpwh is the helper utitlity to do gerber compatible fills.
 #
 RUN su meow -c " cd /home/meow && \
-  git clone https://github.com/abetusk/bleepsix && \
-  git clone https://github.com/abetusk/www.meowcad.com && \
-  git clone https://github.com/abetusk/pykicad && \
-  git clone https://github.com/abetusk/gbl2ngc && \
-  git clone https://github.com/abetusk/weakpwh "
+  git clone https://gitee.com/yuanyuexiang/bleepsix && \
+  git clone https://gitee.com/yuanyuexiang/www.meowcad.com && \
+  git clone https://gitee.com/yuanyuexiang/pykicad && \
+  git clone https://gitee.com/yuanyuexiang/gbl2ngc && \
+  git clone https://gitee.com/yuanyuexiang/weakpwh "
 
 # Tweak installed repos
 #
 RUN su meow -c " cd /home/meow && \
   mkdir queue stage usr bin && \
   chmod a+rwx stage && \
-  cd /home/meow/weakpwh && ./cmp.sh && \
-  cd /home/meow/gbl2ngc/src && ./cmp.sh && \
+  cd /home/meow/weakpwh && chmod a+rwx * && ./cmp.sh && \
+  cd /home/meow/gbl2ngc/src && chmod a+rwx * && make && \
   cd /home/meow/bin && \
   ln -s /home/meow/gbl2ngc/src/gbl2ngc . && \
   ln -s /home/meow/weakpwh/weakpwh . && \
@@ -75,15 +87,25 @@ RUN cd /etc/ssl && \
     sed -i 's/^#Listen 80$/Listen 8080/' ports.conf && \
     cp /home/meow/www.meowcad.com/config/haproxy/haproxy.cfg /etc/haproxy && \
     cp /home/meow/www.meowcad.com/config/apache2/default /etc/apache2/sites-available/000-default.conf && \
-    cd /usr/bin && ln -s nodejs node
+    cd /usr/bin && ls -l node* \ 
+    && ln -s nodejs node && ls -l node*
 
 # This has to be done after we setup the node -> nodejs symbolic link.
 # See above if the 'canvas' install is failing.
 #
-RUN npm install -g async yargs canvas redis && \
-  su meow -c " cd /home/meow && \
+RUN npm install --registry=https://registry.npm.taobao.org -g cnpm
+
+#RUN cnpm install -g async yargs 
+
+#RUN apt-get install libcairo-dev libjpeg-dev libpng-dev libgif-dev
+RUN npm config set registry https://registry.npm.taobao.org
+RUN rm -rf /usr/lib/node_modules 
+RUN npm install -g async yargs 
+RUN npm install -g canvas@1.1.6 
+
+RUN su meow -c " cd /home/meow && \
   cd /home/meow/www.meowcad.com/js && \
-  npm install async yargs canvas redis "
+  npm install async yargs canvas@1.1.6 redis "
 
 
 
@@ -97,8 +119,8 @@ RUN npm install -g async yargs canvas redis && \
 # This changes the host rewriting rules from 'meowcad(\\\.|\.)com' to 'localhost'.
 # Comment out (or replace with your own host name) for other/produciton use.
 #=============
-RUN sed -i 's/meowcad\\\.com/localhost/' /etc/apache2/sites-available/000-default.conf && \
-    sed -i 's/meowcad\.com/localhost/' /etc/apache2/sites-available/000-default.conf
+#RUN sed -i 's/meowcad\\\.com/localhost/' /etc/apache2/sites-available/000-default.conf && \
+#    sed -i 's/meowcad\.com/localhost/' /etc/apache2/sites-available/000-default.conf
 #=============
 
 # SETUP HTML/JS
@@ -132,9 +154,9 @@ RUN mv /var/www/template/analytics_template.html analytics_template.meowcad.html
 # keep the container running.
 #
 COPY ./startup_and_persist.sh /root/startup_and_persist.sh
-
+COPY ./000-default.conf /etc/apache2/sites-available/000-default.conf
 # 80 should redirect to 443.
 #
-EXPOSE 80 443
+EXPOSE 80 8080 443
 
 CMD ["/root/startup_and_persist.sh"]
